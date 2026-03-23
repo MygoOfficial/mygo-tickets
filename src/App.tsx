@@ -6,6 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index";
 import TicketsList from "./pages/TicketsList";
 import CreateTicket from "./pages/CreateTicket";
+import Assets from "./pages/Assets";
+import Teams from "./pages/Teams";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +23,9 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/tickets" element={<TicketsList />} />
           <Route path="/tickets/new" element={<CreateTicket />} />
+          <Route path="/assets" element={<Assets />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
