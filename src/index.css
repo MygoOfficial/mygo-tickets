@@ -52,6 +52,12 @@
     --warning-foreground: 0 0% 100%;
     --info: 210 80% 55%;
     --info-foreground: 0 0% 100%;
+
+    --chart-1: 193 93% 17%;
+    --chart-2: 16 100% 59%;
+    --chart-3: 152 60% 40%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 210 80% 55%;
   }
 
   .dark {
