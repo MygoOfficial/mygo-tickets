@@ -9,6 +9,8 @@ import CreateTicket from "./pages/CreateTicket";
 import Assets from "./pages/Assets";
 import Teams from "./pages/Teams";
 import Reports from "./pages/Reports";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/assets" element={<Assets />} />
           <Route path="/teams" element={<Teams />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
