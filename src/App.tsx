@@ -9,6 +9,8 @@ import CreateTicket from "./pages/CreateTicket";
 import Assets from "./pages/Assets";
 import Teams from "./pages/Teams";
 import Reports from "./pages/Reports";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
