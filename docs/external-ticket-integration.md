@@ -23,7 +23,7 @@ X-API-Key: <your-external-support-api-key>
 
 ## 2. API Endpoint
 
-* **URL**: `https://<ticketing-app-domain>/api/tickets`
+* **URL**: `http://ec2-54-221-31-53.compute-1.amazonaws.com/api/tickets`
 * **Method**: `POST`
 * **Content-Type**: `application/json`
 
@@ -120,7 +120,7 @@ console.error = (...args) => {
  * @param {string} ticketData.userName - Name of the active logged-in user
  */
 async function submitSupportTicket({ title, description, category, subcategory, priority, tenantId, userEmail, userName }) {
-  const TICKETING_API_URL = "http://localhost:8080/api/tickets"; // Update with actual Ticketing API host
+  const TICKETING_API_URL = "http://ec2-54-221-31-53.compute-1.amazonaws.com/api/tickets";
   const EXTERNAL_API_KEY = "mygo-external-support-key"; // Retrieve from a secure config
 
   const payload = {
