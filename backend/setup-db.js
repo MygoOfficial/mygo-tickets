@@ -96,35 +96,39 @@ async function runSetup() {
       )
     `);
 
-    // Seed users
-    console.log('Seeding users...');
-    const hashedPwd = await bcrypt.hash('password123', 10);
-    
-    const requestorUsers = [
-      ['Sarah Chen', 'sarah@example.com', hashedPwd, 'Requestor', null],
-      ['Raj Patel', 'raj@example.com', hashedPwd, 'Requestor', null],
-      ['Emily Watson', 'emily@example.com', hashedPwd, 'Requestor', null],
-      ['Tom Wilson', 'tom@example.com', hashedPwd, 'Requestor', null],
-      ['Priya Sharma', 'priya@example.com', hashedPwd, 'Requestor', null],
-      ['John Doe', 'john@example.com', hashedPwd, 'Requestor', null],
-    ];
-
-    const agentUsers = [
-      ['Mike Johnson', 'mike@example.com', hashedPwd, 'Agent', 'IT Support'],
-      ['Lisa Park', 'lisa@example.com', hashedPwd, 'Agent', 'HR Operations'],
-      ['Dave Chen', 'dave@example.com', hashedPwd, 'Agent', 'IT Support'],
-      ['Karen Lee', 'karen@example.com', hashedPwd, 'Agent', 'IT Security'],
-      ['Admin Agent', 'admin@example.com', hashedPwd, 'Agent', 'IT Support'],
-    ];
-
     const userMap = {}; // Maps name to id
 
-    for (const [name, email, pwd, role, department] of [...requestorUsers, ...agentUsers]) {
-      const res = await pool.query(
-        'INSERT INTO users (name, email, password_hash, role, department) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-        [name, email, pwd, role, department]
-      );
-      userMap[name] = res.rows[0].id;
+    if (process.env.SEED_MOCK_DATA === 'true') {
+      // Seed users
+      console.log('Seeding users...');
+      const hashedPwd = await bcrypt.hash('password123', 10);
+      
+      const requestorUsers = [
+        ['Sarah Chen', 'sarah@example.com', hashedPwd, 'Requestor', null],
+        ['Raj Patel', 'raj@example.com', hashedPwd, 'Requestor', null],
+        ['Emily Watson', 'emily@example.com', hashedPwd, 'Requestor', null],
+        ['Tom Wilson', 'tom@example.com', hashedPwd, 'Requestor', null],
+        ['Priya Sharma', 'priya@example.com', hashedPwd, 'Requestor', null],
+        ['John Doe', 'john@example.com', hashedPwd, 'Requestor', null],
+      ];
+
+      const agentUsers = [
+        ['Mike Johnson', 'mike@example.com', hashedPwd, 'Agent', 'IT Support'],
+        ['Lisa Park', 'lisa@example.com', hashedPwd, 'Agent', 'HR Operations'],
+        ['Dave Chen', 'dave@example.com', hashedPwd, 'Agent', 'IT Support'],
+        ['Karen Lee', 'karen@example.com', hashedPwd, 'Agent', 'IT Security'],
+        ['Admin Agent', 'admin@example.com', hashedPwd, 'Agent', 'IT Support'],
+      ];
+
+      for (const [name, email, pwd, role, department] of [...requestorUsers, ...agentUsers]) {
+        const res = await pool.query(
+          'INSERT INTO users (name, email, password_hash, role, department) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+          [name, email, pwd, role, department]
+        );
+        userMap[name] = res.rows[0].id;
+      }
+    } else {
+      console.log('Skipping user seeding (production clean state)');
     }
 
     console.log('Seeding tickets...');
