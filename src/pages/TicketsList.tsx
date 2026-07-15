@@ -38,6 +38,40 @@ interface TicketData {
   closedAt?: string;
 }
 
+const getSourceLabel = (source: string | undefined | null) => {
+  if (!source) return "Portal";
+  const srcLower = source.toLowerCase();
+  if (srcLower.includes("yoda")) return "Yoda";
+  if (srcLower.includes("docsync")) return "DocSync";
+  if (srcLower.includes("resume")) return "Resume";
+  if (srcLower.includes("forms")) return "Forms";
+  return source.split(".")[0] || source;
+};
+
+const SourceBadge = ({ source }: { source?: string | null }) => {
+  const label = getSourceLabel(source);
+  let colorClass = "bg-slate-500/10 text-slate-500 border-slate-500/20";
+  
+  if (label === "Yoda") {
+    colorClass = "bg-indigo-500/10 text-indigo-500 border-indigo-500/20 dark:bg-indigo-500/20";
+  } else if (label === "DocSync") {
+    colorClass = "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:bg-emerald-500/20";
+  } else if (label === "Resume") {
+    colorClass = "bg-violet-500/10 text-violet-500 border-violet-500/20 dark:bg-violet-500/20";
+  } else if (label === "Forms") {
+    colorClass = "bg-amber-500/10 text-amber-500 border-amber-500/20 dark:bg-amber-500/20";
+  } else if (label === "Portal") {
+    colorClass = "bg-sky-500/10 text-sky-500 border-sky-500/20 dark:bg-sky-500/20";
+  }
+  
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${colorClass}`}>
+      <Globe className="h-3 w-3 shrink-0" />
+      {label}
+    </span>
+  );
+};
+
 const TicketsList = () => {
   const navigate = useNavigate();
   const { token, user } = useAuth();
@@ -194,6 +228,7 @@ const TicketsList = () => {
                     <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">ID</th>
                     <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title</th>
                     <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
+                    <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Source</th>
                     <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Priority</th>
                     <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                     <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Assigned To</th>
@@ -218,6 +253,9 @@ const TicketsList = () => {
                           <p className="text-xs text-muted-foreground mt-0.5">Raised by: {ticket.requestor}</p>
                         </td>
                         <td className="p-4 text-sm text-muted-foreground">{ticket.subcategory}</td>
+                        <td className="p-4">
+                          <SourceBadge source={ticket.source} />
+                        </td>
                         <td className="p-4">
                           <PriorityBadge priority={ticket.priority} />
                         </td>
@@ -289,7 +327,7 @@ const TicketsList = () => {
                   })}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-muted-foreground text-sm font-medium">
+                      <td colSpan={9} className="p-8 text-center text-muted-foreground text-sm font-medium">
                         No tickets found matching current filters.
                       </td>
                     </tr>
@@ -350,6 +388,19 @@ const TicketsList = () => {
                     <div className="space-y-1">
                       <span className="text-xs text-muted-foreground block">Subcategory</span>
                       <span className="font-medium">{selectedTicket.subcategory}</span>
+                    </div>
+                    <div className="space-y-1 border-t pt-2 mt-1">
+                      <span className="text-xs text-muted-foreground block">Source System</span>
+                      <span className="font-medium block mt-0.5">
+                        <SourceBadge source={selectedTicket.source} />
+                      </span>
+                    </div>
+                    <div className="space-y-1 border-t pt-2 mt-1">
+                      <span className="text-xs text-muted-foreground block">Tenant ID</span>
+                      <span className="font-medium flex items-center gap-1.5 mt-0.5 font-mono text-xs text-primary">
+                        <Building className="h-3.5 w-3.5 text-muted-foreground" />
+                        {selectedTicket.tenantId || "N/A"}
+                      </span>
                     </div>
                     <div className="space-y-1 col-span-2 border-t pt-2 mt-1">
                       <span className="text-xs text-muted-foreground block">Requestor</span>
