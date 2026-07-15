@@ -7,14 +7,36 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { useTimezone, TIMEZONE_MAP } from "@/context/TimezoneContext";
 
 export default function Settings() {
-  const [profile, setProfile] = useState({ name: "John Doe", email: "john.doe@mygo.com", role: "Employee", department: "IT Operations" });
+  const { timezone, setTimezone } = useTimezone();
+  const { user, updateProfile } = useAuth();
+
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [department, setDepartment] = useState(user?.department || "IT Support");
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      setEmail(user.email);
+      if (user.department) {
+        setDepartment(user.department);
+      }
+    }
+  }, [user]);
+
   const [notifSettings, setNotifSettings] = useState({ email: true, inApp: true, slaAlerts: true, approvals: true, ticketUpdates: false });
 
   const handleSave = () => toast({ title: "Settings saved", description: "Your preferences have been updated." });
+  
+  const handleSaveProfile = async () => {
+    await updateProfile(name, email, user?.role === 'Agent' ? department : undefined);
+  };
 
   return (
     <AppLayout title="Settings">
@@ -36,20 +58,33 @@ export default function Settings() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Full Name</Label>
-                    <Input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+                    <Input value={name} onChange={(e) => setName(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label>Email</Label>
-                    <Input value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+                    <Input value={email} onChange={(e) => setEmail(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label>Role</Label>
-                    <Input value={profile.role} disabled className="opacity-70" />
+                    <Input value={user?.role || ""} disabled className="opacity-70" />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Department</Label>
-                    <Input value={profile.department} disabled className="opacity-70" />
-                  </div>
+                  {user?.role === 'Agent' && (
+                    <div className="space-y-2">
+                      <Label>Department</Label>
+                      <Select value={department} onValueChange={setDepartment}>
+                        <SelectTrigger className="bg-card">
+                          <SelectValue placeholder="Select department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="IT Support">IT Support</SelectItem>
+                          <SelectItem value="IT Security">IT Security</SelectItem>
+                          <SelectItem value="HR Operations">HR Operations</SelectItem>
+                          <SelectItem value="Payroll">Payroll</SelectItem>
+                          <SelectItem value="Immigration">Immigration</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 <Separator />
                 <div className="space-y-2">
@@ -59,7 +94,7 @@ export default function Settings() {
                     <Input type="password" placeholder="New password" />
                   </div>
                 </div>
-                <Button variant="accent" onClick={handleSave}>Save Changes</Button>
+                <Button variant="accent" onClick={handleSaveProfile}>Save Changes</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -140,6 +175,19 @@ export default function Settings() {
                   <div className="space-y-2">
                     <Label>Escalation Timeout (hours)</Label>
                     <Input type="number" defaultValue="4" min={1} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Timezone Preference</Label>
+                    <Select value={timezone} onValueChange={setTimezone}>
+                      <SelectTrigger className="bg-card">
+                        <SelectValue placeholder="Select Timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(TIMEZONE_MAP).map((tz) => (
+                          <SelectItem key={tz} value={tz}>{tz} ({TIMEZONE_MAP[tz]})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <Separator />

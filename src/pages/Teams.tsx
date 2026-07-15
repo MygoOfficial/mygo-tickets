@@ -3,17 +3,90 @@ import { MOCK_TEAMS } from "@/data/teams";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Ticket, CheckCircle2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
+
+interface DBUser {
+  id: number;
+  name: string;
+  email: string;
+  department: string | null;
+}
 
 const Teams = () => {
+  const { token } = useAuth();
+
+  const { data: agents = [] } = useQuery<DBUser[]>({
+    queryKey: ["agents"],
+    queryFn: async () => {
+      const response = await fetch("/api/users/agents", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch agents");
+      return response.json();
+    },
+    enabled: !!token,
+  });
+
+  const { data: metrics = [] } = useQuery<{ assigned_team: string; active_count: number; resolved_count: number }[]>({
+    queryKey: ["teamMetrics"],
+    queryFn: async () => {
+      const response = await fetch("/api/teams/metrics", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch team metrics");
+      return response.json();
+    },
+    enabled: !!token,
+  });
+
+  const mergedTeams = MOCK_TEAMS.map((team) => {
+    // Find dynamic metrics
+    const teamMetric = metrics.find((m) => m.assigned_team === team.name);
+    const activeTickets = teamMetric ? teamMetric.active_count : 0;
+    const resolvedThisMonth = teamMetric ? teamMetric.resolved_count : 0;
+
+    // Find agents belonging to this department (team.name)
+    const departmentAgents = agents.filter((agent) => agent.department === team.name);
+
+    // Build a set of existing member names to avoid duplicates
+    const existingNames = new Set(team.members.map((m) => m.name));
+
+    // Convert DB agents to TeamMember format
+    const newMembers = departmentAgents
+      .filter((agent) => !existingNames.has(agent.name))
+      .map((agent) => ({
+        name: agent.name,
+        role: agent.name === team.lead ? "Team Lead" : "Support Agent",
+        avatar: agent.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2),
+      }));
+
+    return {
+      ...team,
+      activeTickets,
+      resolvedThisMonth,
+      members: [...team.members, ...newMembers],
+    };
+  });
+
   return (
     <AppLayout title="Teams">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm">{MOCK_TEAMS.length} teams across the organization</p>
+          <p className="text-muted-foreground text-sm">{mergedTeams.length} teams across the organization</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {MOCK_TEAMS.map((team) => (
+          {mergedTeams.map((team) => (
             <Card key={team.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
