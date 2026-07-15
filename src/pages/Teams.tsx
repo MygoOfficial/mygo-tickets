@@ -1,5 +1,4 @@
 import { AppLayout } from "@/components/AppLayout";
-import { MOCK_TEAMS } from "@/data/teams";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Ticket, CheckCircle2 } from "lucide-react";
@@ -12,6 +11,14 @@ interface DBUser {
   email: string;
   department: string | null;
 }
+
+const BASE_TEAMS = [
+  { id: "TEAM-001", name: "IT Support", description: "Hardware, software & infrastructure support", defaultLead: "Mike Johnson" },
+  { id: "TEAM-002", name: "IT Security", description: "Access management & security operations", defaultLead: "Karen Lee" },
+  { id: "TEAM-003", name: "HR Operations", description: "Employee lifecycle & HR processes", defaultLead: "Lisa Park" },
+  { id: "TEAM-004", name: "Payroll", description: "Payroll processing & queries", defaultLead: "Robert Kim" },
+  { id: "TEAM-005", name: "Immigration", description: "Visa processing & documentation", defaultLead: "Maria Santos" },
+];
 
 const Teams = () => {
   const { token } = useAuth();
@@ -44,37 +51,53 @@ const Teams = () => {
     enabled: !!token,
   });
 
-  const mergedTeams = MOCK_TEAMS.map((team) => {
+  // Get all unique departments from agents database + metrics + base teams
+  const allDepartmentNames = Array.from(new Set([
+    ...BASE_TEAMS.map(t => t.name),
+    ...agents.map(a => a.department).filter(Boolean) as string[],
+    ...metrics.map(m => m.assigned_team).filter(Boolean) as string[]
+  ]));
+
+  const mergedTeams = allDepartmentNames.map((deptName) => {
+    // Find if it is a base team
+    const baseTeam = BASE_TEAMS.find(t => t.name === deptName);
+    const id = baseTeam ? baseTeam.id : `TEAM-${deptName.toUpperCase().replace(/\s+/g, "-").slice(0, 8)}`;
+    const description = baseTeam ? baseTeam.description : `${deptName} operations and support management`;
+    
     // Find dynamic metrics
-    const teamMetric = metrics.find((m) => m.assigned_team === team.name);
+    const teamMetric = metrics.find((m) => m.assigned_team === deptName);
     const activeTickets = teamMetric ? teamMetric.active_count : 0;
     const resolvedThisMonth = teamMetric ? teamMetric.resolved_count : 0;
 
-    // Find agents belonging to this department (team.name)
-    const departmentAgents = agents.filter((agent) => agent.department === team.name);
+    // Find agents belonging to this department
+    const departmentAgents = agents.filter((agent) => agent.department === deptName);
 
-    // Build a set of existing member names to avoid duplicates
-    const existingNames = new Set(team.members.map((m) => m.name));
+    // Determine the lead:
+    // If defaultLead is in the agents list, they are the lead.
+    // Otherwise, if there are agents, make the first agent in the list the lead.
+    const defaultLead = baseTeam ? baseTeam.defaultLead : "";
+    const hasDefaultLead = departmentAgents.some(a => a.name === defaultLead);
+    const leadName = hasDefaultLead ? defaultLead : (departmentAgents.length > 0 ? departmentAgents[0].name : defaultLead);
 
-    // Convert DB agents to TeamMember format
-    const newMembers = departmentAgents
-      .filter((agent) => !existingNames.has(agent.name))
-      .map((agent) => ({
-        name: agent.name,
-        role: agent.name === team.lead ? "Team Lead" : "Support Agent",
-        avatar: agent.name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
-          .slice(0, 2),
-      }));
+    const members = departmentAgents.map((agent) => ({
+      name: agent.name,
+      role: agent.name === leadName ? "Team Lead" : "Support Agent",
+      avatar: agent.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2),
+    }));
 
     return {
-      ...team,
+      id,
+      name: deptName,
+      description,
+      lead: leadName,
+      members,
       activeTickets,
       resolvedThisMonth,
-      members: [...team.members, ...newMembers],
     };
   });
 
